@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>বিকাশ লোন ক্যালকুলেটর</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .calculator-box {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    .calculator-box h2 {
+      text-align: center;
+      color: #D7141A;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      background-color: #D7141A;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 25px;
+      background: #f1f1f1;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .result ul {
+      list-style: none;
+      padding: 0;
+    }
+    .result li {
+      padding: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calculator-box">
+  <h2>📱 বিকাশ লোন ক্যালকুলেটর</h2>
+
+  <label for="amount">লোন এমাউন্ট (৳)</label>
+  <input type="number" id="amount" placeholder="যেমনঃ ২০০০">
+
+  <label for="fee">প্রসেসিং ফি (%)</label>
+  <input type="number" id="fee" placeholder="যেমনঃ ১.৫">
+
+  <label for="interest">সুদের হার প্রতি মাসে (%)</label>
+  <input type="number" id="interest" placeholder="যেমনঃ ১.৫">
+
+  <label for="months">মেয়াদ (মাস)</label>
+  <input type="number" id="months" placeholder="যেমনঃ ৩">
+
+  <button onclick="calculate()">হিসাব করুন</button>
+
+  <div class="result" id="output" style="display:none;">
+    <h4>📊 ফলাফল:</h4>
+    <ul id="resultList"></ul>
+  </div>
+</div>
+
+<script>
+  function calculate() {
+    const amount = parseFloat(document.getElementById("amount").value);
+    const feePercent = parseFloat(document.getElementById("fee").value);
+    const interestPercent = parseFloat(document.getElementById("interest").value);
+    const months = parseInt(document.getElementById("months").value);
+
+    if (isNaN(amount) || isNaN(feePercent) || isNaN(interestPercent) || isNaN(months)) {
+      alert("সব ঘর সঠিকভাবে পূরণ করুন!");
+      return;
+    }
+
+    const processingFee = amount * (feePercent / 100);
+    const netAmount = amount - processingFee;
+
+    const totalInterest = amount * (interestPercent / 100) * months;
+    const totalPayable = amount + totalInterest;
+    const monthlyInstallment = totalPayable / months;
+
+    document.getElementById("resultList").innerHTML = `
+      <li>🔹 প্রোসেসিং ফি: ৳${processingFee.toFixed(2)}</li>
+      <li>🔹 আপনি হাতে পাবেন: ৳${netAmount.toFixed(2)}</li>
+      <li>🔹 প্রতি মাসের কিস্তি: ৳${monthlyInstallment.toFixed(2)}</li>
+      <li>🔹 মোট ফেরত দিতে হবে: ৳${totalPayable.toFixed(2)}</li>
+      <li>🔹 মোট সুদ: ৳${totalInterest.toFixed(2)}</li>
+      <li>🔹 মেয়াদ: ${months} মাস</li>
+    `;
+    document.getElementById("output").style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
