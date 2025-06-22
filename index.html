@@ -2,124 +2,172 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>বিকাশ লোন ক্যালকুলেটর</title>
+  <title>লোন হিসাব</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f6f7fb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: sans-serif;
+      background: #f0f0f5;
       padding: 20px;
     }
-    .calculator-box {
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    .calculator-box h2 {
-      text-align: center;
-      color: #D7141A;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    input {
-      width: 100%;
+    input, button {
       padding: 10px;
-      margin-top: 5px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      margin-top: 20px;
+      margin: 5px 0;
       width: 100%;
-      background-color: #D7141A;
-      color: white;
-      border: none;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
+      max-width: 300px;
     }
-    .result {
-      margin-top: 25px;
-      background: #f1f1f1;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: right;
+    }
+    th {
+      background: #ddd;
+    }
+    tfoot td {
+      font-weight: bold;
+      background: #eef;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 750px;
+      margin: auto;
+    }
+    .summary {
+      margin-top: 20px;
+      background: #fff5e6;
       padding: 15px;
       border-radius: 8px;
     }
-    .result ul {
-      list-style: none;
-      padding: 0;
-    }
-    .result li {
-      padding: 6px 0;
+    .summary p {
+      margin: 5px 0;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>📊 লোন হিসাব</h1>
 
-<div class="calculator-box">
-  <h2>📱 বিকাশ লোন ক্যালকুলেটর</h2>
+    <label>লোনের পরিমাণ (৳):</label><br>
+    <input type="number" id="amount" placeholder="যেমন: 100000"><br>
 
-  <label for="amount">লোন এমাউন্ট (৳)</label>
-  <input type="number" id="amount" placeholder="যেমনঃ ২০০০">
+    <label>প্রসেসিং ফি (%):</label><br>
+    <input type="number" id="processingFee" placeholder="যেমন: 1.5"><br>
 
-  <label for="fee">প্রসেসিং ফি (%)</label>
-  <input type="number" id="fee" placeholder="যেমনঃ ১.৫">
+    <label>সুদের হার (বাৎসরিক %):</label><br>
+    <input type="number" id="rate" placeholder="যেমন: 12"><br>
 
-  <label for="interest">সুদের হার প্রতি মাসে (%)</label>
-  <input type="number" id="interest" placeholder="যেমনঃ ১.৫">
+    <label>সময় (মাসে):</label><br>
+    <input type="number" id="months" placeholder="যেমন: 12"><br>
 
-  <label for="months">মেয়াদ (মাস)</label>
-  <input type="number" id="months" placeholder="যেমনঃ ৩">
+    <button onclick="calculateEMI()">হিসাব করুন</button>
 
-  <button onclick="calculate()">হিসাব করুন</button>
+    <div class="summary" id="loanSummary" style="display:none;">
+      <h3>📌 লোনের সারসংক্ষেপ</h3>
+      <p id="netAmountResult"></p>
+      <p id="emiResult"></p>
+      <p id="totalPrincipalLine"></p>
+      <p id="totalInterestLine"></p>
+      <p id="totalPaymentLine"></p>
+      <button onclick="downloadPDF()">📥 PDF ডাউনলোড করুন</button>
+    </div>
 
-  <div class="result" id="output" style="display:none;">
-    <h4>📊 ফলাফল:</h4>
-    <ul id="resultList"></ul>
+    <table id="scheduleTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>মাস</th>
+          <th>মূলধন (৳)</th>
+          <th>সুদ (৳)</th>
+          <th>মোট কিস্তি (৳)</th>
+          <th>বাকি ঋণ (৳)</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleBody"></tbody>
+      <tfoot>
+        <tr>
+          <td>মোট</td>
+          <td id="totalPrincipal">0.00</td>
+          <td id="totalInterest">0.00</td>
+          <td id="totalPayment">0.00</td>
+          <td>—</td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
-</div>
 
-<script>
-  function calculate() {
-    const amount = parseFloat(document.getElementById("amount").value);
-    const feePercent = parseFloat(document.getElementById("fee").value);
-    const interestPercent = parseFloat(document.getElementById("interest").value);
-    const months = parseInt(document.getElementById("months").value);
+  <script>
+    function calculateEMI() {
+      const amount = parseFloat(document.getElementById("amount").value);
+      const processingFeePercent = parseFloat(document.getElementById("processingFee").value) || 0;
+      const annualRate = parseFloat(document.getElementById("rate").value);
+      const months = parseInt(document.getElementById("months").value);
 
-    if (isNaN(amount) || isNaN(feePercent) || isNaN(interestPercent) || isNaN(months)) {
-      alert("সব ঘর সঠিকভাবে পূরণ করুন!");
-      return;
+      const processingFee = amount * (processingFeePercent / 100);
+      const netAmount = amount - processingFee;
+      const monthlyRate = annualRate / 12 / 100;
+      const emi = amount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+
+      let balance = amount;
+      let totalPrincipal = 0;
+      let totalInterest = 0;
+      const tableBody = document.getElementById("scheduleBody");
+      tableBody.innerHTML = "";
+
+      for (let i = 1; i <= months; i++) {
+        const interest = balance * monthlyRate;
+        const principal = emi - interest;
+        balance -= principal;
+
+        totalPrincipal += principal;
+        totalInterest += interest;
+
+        const row = `<tr>
+          <td>${i}</td>
+          <td>${principal.toFixed(2)}</td>
+          <td>${interest.toFixed(2)}</td>
+          <td>${emi.toFixed(2)}</td>
+          <td>${balance > 0 ? balance.toFixed(2) : "0.00"}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+      }
+
+      const totalPayment = totalPrincipal + totalInterest;
+
+      // Show summary
+      document.getElementById("netAmountResult").innerText = `হাতে পাবেন: ৳${netAmount.toFixed(2)} (প্রসেসিং ফি কেটে)`;
+      document.getElementById("emiResult").innerText = `প্রতি মাসে কিস্তি: ৳${emi.toFixed(2)}`;
+      document.getElementById("totalPrincipalLine").innerText = `মোট মূলধন পরিশোধ: ৳${totalPrincipal.toFixed(2)}`;
+      document.getElementById("totalInterestLine").innerText = `মোট সুদ পরিশোধ: ৳${totalInterest.toFixed(2)}`;
+      document.getElementById("totalPaymentLine").innerText = `মোট কিস্তি পরিশোধ: ৳${totalPayment.toFixed(2)}`;
+
+      document.getElementById("totalPrincipal").innerText = totalPrincipal.toFixed(2);
+      document.getElementById("totalInterest").innerText = totalInterest.toFixed(2);
+      document.getElementById("totalPayment").innerText = totalPayment.toFixed(2);
+
+      document.getElementById("scheduleTable").style.display = "table";
+      document.getElementById("loanSummary").style.display = "block";
     }
 
-    const processingFee = amount * (feePercent / 100);
-    const netAmount = amount - processingFee;
-
-    const totalInterest = amount * (interestPercent / 100) * months;
-    const totalPayable = amount + totalInterest;
-    const monthlyInstallment = totalPayable / months;
-
-    document.getElementById("resultList").innerHTML = `
-      <li>🔹 প্রোসেসিং ফি: ৳${processingFee.toFixed(2)}</li>
-      <li>🔹 আপনি হাতে পাবেন: ৳${netAmount.toFixed(2)}</li>
-      <li>🔹 প্রতি মাসের কিস্তি: ৳${monthlyInstallment.toFixed(2)}</li>
-      <li>🔹 মোট ফেরত দিতে হবে: ৳${totalPayable.toFixed(2)}</li>
-      <li>🔹 মোট সুদ: ৳${totalInterest.toFixed(2)}</li>
-      <li>🔹 মেয়াদ: ${months} মাস</li>
-    `;
-    document.getElementById("output").style.display = 'block';
-  }
-</script>
-
+    function downloadPDF() {
+      const element = document.getElementById("loanSummary");
+      const opt = {
+        margin:       0.5,
+        filename:     'loan-summary.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
 </body>
 </html>
