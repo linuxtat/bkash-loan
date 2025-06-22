@@ -38,7 +38,7 @@
       background: white;
       padding: 20px;
       border-radius: 8px;
-      max-width: 750px;
+      max-width: 800px;
       margin: auto;
     }
     .summary {
@@ -64,7 +64,10 @@
     <input type="number" id="processingFee" placeholder="যেমন: 1.5"><br>
 
     <label>সুদের হার (বাৎসরিক %):</label><br>
-    <input type="number" id="rate" placeholder="যেমন: 12"><br>
+    <input type="number" id="annualRate" placeholder="যেমন: 12"><br>
+
+    <label>সুদের হার (মাসিক %):</label><br>
+    <input type="number" id="monthlyRate" placeholder="যেমন: 1"><br>
 
     <label>সময় (মাসে):</label><br>
     <input type="number" id="months" placeholder="যেমন: 12"><br>
@@ -108,12 +111,24 @@
     function calculateEMI() {
       const amount = parseFloat(document.getElementById("amount").value);
       const processingFeePercent = parseFloat(document.getElementById("processingFee").value) || 0;
-      const annualRate = parseFloat(document.getElementById("rate").value);
+      const annualRate = parseFloat(document.getElementById("annualRate").value);
+      const monthlyRateInput = parseFloat(document.getElementById("monthlyRate").value);
       const months = parseInt(document.getElementById("months").value);
 
       const processingFee = amount * (processingFeePercent / 100);
       const netAmount = amount - processingFee;
-      const monthlyRate = annualRate / 12 / 100;
+
+      // মাসিক সুদের হার ঠিক করা
+      let monthlyRate = 0;
+      if (!isNaN(monthlyRateInput)) {
+        monthlyRate = monthlyRateInput / 100;
+      } else if (!isNaN(annualRate)) {
+        monthlyRate = (annualRate / 12) / 100;
+      } else {
+        alert("কমপক্ষে একটি সুদের হার প্রদান করুন।");
+        return;
+      }
+
       const emi = amount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
 
       let balance = amount;
@@ -142,7 +157,6 @@
 
       const totalPayment = totalPrincipal + totalInterest;
 
-      // Show summary
       document.getElementById("netAmountResult").innerText = `হাতে পাবেন: ৳${netAmount.toFixed(2)} (প্রসেসিং ফি কেটে)`;
       document.getElementById("emiResult").innerText = `প্রতি মাসে কিস্তি: ৳${emi.toFixed(2)}`;
       document.getElementById("totalPrincipalLine").innerText = `মোট মূলধন পরিশোধ: ৳${totalPrincipal.toFixed(2)}`;
